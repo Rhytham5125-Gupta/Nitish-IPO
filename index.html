@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IPO Profit Splitter - Chain Profit Distribution</title>
+  
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    if (window.tailwind) {
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                50: '#eef2ff',
+                500: '#6366f1',
+                600: '#4f46e5',
+              }
+            }
+          }
+        }
+      };
+    }
+  </script>
+  
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- SheetJS for Clean Excel Export -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-[#0b0f19] text-slate-100 font-sans antialiased min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
+
+  <!-- Header -->
+  <header class="bg-slate-950/90 backdrop-blur-md border-b border-slate-800/80 sticky top-0 z-40 px-4 lg:px-8 py-3">
+    <div class="flex items-center justify-between max-w-7xl mx-auto">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-emerald-400 flex items-center justify-center shadow-lg shadow-indigo-500/20 text-white font-black text-xl">
+          <i class="fa-solid fa-coins"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="font-bold text-lg text-white tracking-tight">IPO Profit Splitter</h1>
+            <span class="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">PAN Card Holders</span>
+          </div>
+          <p class="text-xs text-slate-400">Exact Chain Distribution &bull; Clean Excel Export</p>
+        </div>
+      </div>
+
+      <!-- Main Section Switcher Pills & Actions -->
+      <div class="flex items-center gap-2.5">
+        <!-- Section Toggle -->
+        <div class="flex items-center bg-slate-900 border border-slate-800 p-1 rounded-xl">
+          <button id="btn-view-ipos" onclick="App.switchView('ipos')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition bg-indigo-600 text-white shadow-sm flex items-center gap-1.5">
+            <i class="fa-solid fa-chart-pie"></i>
+            <span>IPO Profit Splits</span>
+          </button>
+          <button id="btn-view-master" onclick="App.switchView('master')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition text-slate-400 hover:text-white flex items-center gap-1.5">
+            <i class="fa-solid fa-table-list"></i>
+            <span>Master IPO Sheet</span>
+            <span id="badge-master-pending" class="text-[10px] px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">₹0 Due</span>
+          </button>
+          <button id="btn-view-fixed-pans" onclick="App.switchView('fixed-pans')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition text-slate-400 hover:text-white flex items-center gap-1.5">
+            <i class="fa-solid fa-users"></i>
+            <span>PAN Card Holders</span>
+            <span id="badge-fixed-pan-count" class="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-800 text-slate-300">0</span>
+          </button>
+        </div>
+
+        <div class="h-5 w-px bg-slate-800 mx-1 hidden sm:block"></div>
+
+        <button onclick="App.openCalculatorModal()" class="text-xs px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 transition flex items-center gap-1.5 font-medium">
+          <i class="fa-solid fa-calculator"></i>
+          <span class="hidden md:inline">Calculator</span>
+        </button>
+
+        <button onclick="App.exportCurrentViewToExcel()" class="text-xs px-3.5 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 transition flex items-center gap-1.5 font-semibold" title="Export formatted Excel Table with sorting & formulas">
+          <i class="fa-solid fa-file-excel text-emerald-400"></i>
+          <span>Export Excel Table</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Formula Quick Explainer Ribbon (Profit & Loss Rules) -->
+  <div class="bg-slate-900/90 border-b border-slate-800/80 px-4 lg:px-8 py-2 text-xs text-slate-300">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center gap-2 flex-wrap">
+        <span class="text-amber-400 font-bold uppercase text-[11px] tracking-wider"><i class="fa-solid fa-bolt mr-1"></i> Payout Options:</span>
+        <span><strong>1. Percentage Split:</strong> Holder 10% &rarr; Middleman 10% &rarr; Partner 15% &rarr; <span class="text-emerald-400 font-bold">You Rest</span></span>
+        <span class="text-slate-500">|</span>
+        <span><strong>2. Direct Amount:</strong> <span class="text-cyan-400 font-bold">Pay Direct Fixed ₹</span> to Holder / Middleman / Partner &rarr; <span class="text-emerald-400 font-bold">You Rest</span></span>
+      </div>
+
+      <div class="text-[11px] text-slate-400">
+        Choose <strong>Percentage (%)</strong> or <strong>Direct Amount (₹)</strong> per allotment or PAN card holder
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 lg:p-8 space-y-6">
+
+    <!-- ==================== VIEW 1: IPO PROFIT SPLITS ==================== -->
+    <section id="view-ipos" class="space-y-6">
+      
+      <!-- IPO Selector Tabs Bar -->
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-2 overflow-x-auto no-scrollbar" id="ipo-tabs-container">
+          <!-- Dynamically populated IPO buttons -->
+        </div>
+
+        <button onclick="App.openAddIpoModal()" class="text-xs px-3 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5 flex-shrink-0 font-medium">
+          <i class="fa-solid fa-plus text-emerald-400"></i> New IPO
+        </button>
+      </div>
+
+      <!-- Top Metrics for Selected IPO -->
+      <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3.5">
+        
+        <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-3.5">
+          <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Total Applied Cost</span>
+          <div class="text-xl font-bold text-white mt-1 font-mono" id="stat-total-applied">₹0</div>
+          <span class="text-[11px] text-slate-400 mt-0.5 block" id="stat-pan-count">0 Lots</span>
+        </div>
+
+        <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-3.5">
+          <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Total Sold Value</span>
+          <div class="text-xl font-bold text-white mt-1 font-mono" id="stat-total-sold">₹0</div>
+          <span class="text-[11px] text-slate-400 mt-0.5 block">Market Exit</span>
+        </div>
+
+        <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-3.5">
+          <span class="text-[10px] font-semibold text-cyan-400 uppercase tracking-wider block">Total Net Profit</span>
+          <div class="text-xl font-bold text-cyan-400 mt-1 font-mono" id="stat-total-profit">₹0</div>
+          <span class="text-[11px] text-slate-400 mt-0.5 block">Sell - Apply</span>
+        </div>
+
+        <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-3.5">
+          <span class="text-[10px] font-semibold text-purple-400 uppercase tracking-wider block">Holders Total</span>
+          <div class="text-xl font-bold text-purple-300 mt-1 font-mono" id="stat-total-x">₹0</div>
+          <span class="text-[11px] text-slate-400 mt-0.5 block">Holders Profit Share</span>
+        </div>
+
+        <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-3.5">
+          <span class="text-[10px] font-semibold text-amber-400 uppercase tracking-wider block">Middlemen & Partners</span>
+          <div class="text-xl font-bold text-amber-300 mt-1 font-mono" id="stat-total-yz">₹0</div>
+          <span class="text-[11px] text-slate-400 mt-0.5 block">Intermediary cuts</span>
+        </div>
+
+        <div class="col-span-2 sm:col-span-1 bg-gradient-to-br from-emerald-950/60 to-slate-900 border border-emerald-500/50 rounded-xl p-3.5 shadow-lg shadow-emerald-950/20">
+          <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider block">YOUR NET PROFIT</span>
+          <div class="text-2xl font-black text-emerald-400 mt-0.5 font-mono" id="stat-total-you">₹0</div>
+          <span class="text-[11px] text-emerald-300/80 font-medium block">The Rest Amount</span>
+        </div>
+
+      </div>
+
+      <!-- Splits Table Card -->
+      <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl">
+        
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <h2 class="text-base font-bold text-white flex items-center gap-2">
+                <span id="current-ipo-name">Select an IPO</span>
+                <span id="current-ipo-badge" class="text-[10px] px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Active</span>
+              </h2>
+              <span id="current-ipo-fixed-cost-badge" class="hidden text-[11px] font-mono text-indigo-300 bg-slate-950/90 px-2.5 py-0.5 rounded-lg border border-slate-700/80 flex items-center gap-1.5 shadow-sm" title="Standard fixed applied cost per lot in this IPO">
+                <i class="fa-solid fa-lock text-[10px] text-indigo-400"></i> Fixed Cost: <strong id="current-ipo-fixed-cost-val" class="text-white">₹14,000</strong>
+                <button type="button" onclick="App.editIpoFixedCost()" class="text-slate-400 hover:text-indigo-300 ml-0.5 transition" title="Change Fixed Cost for this IPO">
+                  <i class="fa-solid fa-pen-to-square text-[10px]"></i>
+                </button>
+              </span>
+              <button id="btn-delete-current-ipo" onclick="App.deleteCurrentIpo()" class="text-slate-500 hover:text-rose-400 text-xs transition p-1" title="Delete this IPO">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            </div>
+            <p class="text-xs text-slate-400 mt-0.5">Allotted holders and exact profit breakdowns for this IPO</p>
+          </div>
+
+          <!-- Quick Action Buttons -->
+          <div class="flex items-center gap-2 self-stretch sm:self-auto flex-wrap">
+            <button id="btn-master-settle-ipo" onclick="App.masterToggleSettleCurrentIpo()" class="text-xs px-3.5 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 font-semibold transition flex items-center gap-1.5 shadow-sm" title="Settle all pending payouts in this IPO">
+              <i class="fa-solid fa-check-double text-amber-400"></i>
+              <span id="btn-master-settle-text">Master Settle IPO</span>
+            </button>
+
+            <button onclick="App.openBulkImportModal()" class="text-xs px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-indigo-300 border border-indigo-500/30 font-semibold transition flex items-center gap-1.5" title="Add multiple PAN card holders at once">
+              <i class="fa-solid fa-layer-group text-indigo-400"></i>
+              <span>Add in Bulk</span>
+            </button>
+
+            <button onclick="App.openAddEntryModal()" class="text-xs px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition shadow-md shadow-indigo-600/30 flex items-center gap-1.5">
+              <i class="fa-solid fa-plus"></i>
+              <span>+ Add Single Split</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Table of Splits (Clean, NO PAN NO UPI) -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="bg-slate-950/80 border-b border-slate-800 text-slate-400 uppercase tracking-wider font-semibold">
+                <th class="py-3 px-3">Holder Name</th>
+                <th class="py-3 px-3">Middleman / Referrer</th>
+                <th class="py-3 px-3">Partner / Coordinator</th>
+                <th class="py-3 px-3 text-right">Apply &rarr; Sell</th>
+                <th class="py-3 px-3 text-right">Total Profit</th>
+                <th class="py-3 px-3">Exact Payout Breakdown</th>
+                <th class="py-3 px-3 text-right font-bold text-emerald-400">Your Profit</th>
+                <th class="py-3 px-3 text-center">Status & Settle Date</th>
+                <th class="py-3 px-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="entries-table-body" class="divide-y divide-slate-800/80">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ==================== VIEW 2: MASTER CONSOLIDATED IPO SHEET ==================== -->
+    <section id="view-master" class="hidden space-y-6">
+      
+      <!-- Top Aggregated Metrics Across All Active IPOs -->
+      <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3.5">
+        
+        <div class="bg-gradient-to-br from-amber-950/40 to-slate-900 border border-amber-500/40 rounded-xl p-3.5 shadow-lg">
+          <span class="text-[10px] font-bold text-amber-400 uppercase tracking-wider block">Total Pending Payout</span>
+          <div class="text-2xl font-black text-amber-300 mt-1 font-mono" id="stat-master-pending">₹0</div>
+          <span class="text-[11px] text-amber-400/80 mt-0.5 block" id="stat-master-pending-count">0 people to settle</span>
+        </div>
+
+        <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-3.5">
+          <span class="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider block">Total Settled Till Date</span>
+          <div class="text-xl font-bold text-emerald-300 mt-1 font-mono" id="stat-master-settled">₹0</div>
+          <span class="text-[11px] text-slate-400 mt-0.5 block">Paid out across all IPOs</span>
+        </div>
+
+        <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-3.5">
+          <span class="text-[10px] font-semibold text-cyan-400 uppercase tracking-wider block">Total Gross Profit</span>
+          <div class="text-xl font-bold text-cyan-400 mt-1 font-mono" id="stat-master-profit">₹0</div>
+          <span class="text-[11px] text-slate-400 mt-0.5 block">All IPOs combined</span>
+        </div>
+
+        <div class="bg-gradient-to-br from-emerald-950/60 to-slate-900 border border-emerald-500/50 rounded-xl p-3.5 shadow-lg shadow-emerald-950/20">
+          <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider block">YOUR NET PROFIT (TOTAL)</span>
+          <div class="text-2xl font-black text-emerald-400 mt-0.5 font-mono" id="stat-master-you">₹0</div>
+          <span class="text-[11px] text-emerald-300/80 font-medium block">All IPOs combined</span>
+        </div>
+
+        <div class="col-span-2 sm:col-span-1 bg-slate-900/70 border border-slate-800 rounded-xl p-3.5 flex flex-col justify-between">
+          <div>
+            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Tracked IPOs</span>
+            <div class="text-xl font-bold text-white mt-1 font-mono" id="stat-master-ipo-count">0 IPOs</div>
+          </div>
+          <button onclick="App.masterSettleAllGlobal()" class="mt-2 text-[11px] px-2.5 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 font-semibold transition flex items-center justify-center gap-1.5 shadow-sm" title="Mark every pending payout across all IPOs as settled">
+            <i class="fa-solid fa-check-double"></i> Settle All Global
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Master Sheet Table Card -->
+      <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl">
+        
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+          <!-- Search & Filter Controls -->
+          <div class="flex flex-1 flex-wrap items-center gap-3">
+            <div class="relative flex-1 min-w-[200px] max-w-sm">
+              <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+              <input type="text" id="search-master-input" oninput="App.renderMasterSheet()" placeholder="Search person by name..." class="w-full bg-slate-950 border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+            </div>
+
+            <!-- Filter Pills -->
+            <div class="flex items-center bg-slate-950 border border-slate-800 p-0.5 rounded-lg text-xs">
+              <button id="master-filter-btn-pending" onclick="App.setMasterFilter('pending')" class="px-2.5 py-1 rounded bg-amber-500/20 text-amber-300 font-semibold transition">Pending Payouts</button>
+              <button id="master-filter-btn-all" onclick="App.setMasterFilter('all')" class="px-2.5 py-1 rounded text-slate-400 hover:text-white font-medium transition">All People</button>
+              <button id="master-filter-btn-settled" onclick="App.setMasterFilter('settled')" class="px-2.5 py-1 rounded text-slate-400 hover:text-white font-medium transition">Settled</button>
+            </div>
+          </div>
+
+          <!-- Summary Count & Info -->
+          <div class="text-xs text-slate-400 flex items-center gap-2">
+            <span id="master-people-count-label">Showing 0 people</span>
+          </div>
+        </div>
+
+        <!-- Consolidated People Table -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="bg-slate-950/80 border-b border-slate-800 text-slate-400 uppercase tracking-wider font-semibold">
+                <th class="py-3 px-3">Person Name</th>
+                <th class="py-3 px-3">Role</th>
+                <th class="py-3 px-3">Earnings Breakdown Per IPO</th>
+                <th class="py-3 px-3 text-right">Total Earned</th>
+                <th class="py-3 px-3 text-right">Settled & Last Date</th>
+                <th class="py-3 px-3 text-right font-bold text-amber-400">Total Due (Pending)</th>
+                <th class="py-3 px-3 text-center">Status & Date</th>
+                <th class="py-3 px-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="master-table-body" class="divide-y divide-slate-800/80">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ==================== VIEW 3: PAN CARD HOLDERS ==================== -->
+    <section id="view-fixed-pans" class="hidden space-y-5">
+      
+      <!-- Top Action Bar -->
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-900/70 border border-slate-800 p-4 rounded-xl">
+        <div class="flex flex-1 items-center gap-3">
+          <div class="relative flex-1 max-w-md">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+            <input type="text" id="search-fixed-pan-input" oninput="App.renderFixedPansTable()" placeholder="Search by Holder Name, Code, Middleman, Partner..." class="w-full bg-slate-950 border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="App.openAddFixedPanModal()" class="text-xs px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition shadow-md shadow-indigo-600/30 flex items-center gap-1.5">
+            <i class="fa-solid fa-plus"></i>
+            <span>+ Add PAN Card Holder</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Saved People Table (NO PAN NO UPI) -->
+      <div class="bg-slate-900/70 border border-slate-800 rounded-xl overflow-hidden shadow-sm">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="bg-slate-950/80 border-b border-slate-800 text-slate-400 uppercase tracking-wider font-semibold">
+                <th class="py-3 px-4">Holder Name &amp; Code</th>
+                <th class="py-3 px-4">Linked Middleman</th>
+                <th class="py-3 px-4">Linked Partner</th>
+                <th class="py-3 px-4">Phone / Contact</th>
+                <th class="py-3 px-4">Default Split Rules</th>
+                <th class="py-3 px-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="fixed-pans-table-body" class="divide-y divide-slate-800/80">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+
+        <div class="p-3.5 bg-slate-950/60 border-t border-slate-800 text-xs text-slate-400 flex items-center justify-between">
+          <span id="fixed-pans-count-label">Showing 0 PAN card holders</span>
+          <span class="text-slate-500">When adding an IPO allotment, you can pick any of these with 1 click!</span>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ==================== MODALS ==================== -->
+
+  <!-- MODAL: ADD / EDIT SINGLE ALLOTMENT ENTRY -->
+  <div id="modal-entry" class="modal-overlay hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-xl w-full shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/50">
+        <h3 class="font-bold text-white text-base flex items-center gap-2" id="modal-entry-title">
+          <i class="fa-solid fa-coins text-emerald-400"></i> Add Allotment Split
+        </h3>
+        <button onclick="App.closeModal('modal-entry')" class="text-slate-400 hover:text-white transition">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <form id="form-entry" onsubmit="App.saveEntry(event)" class="p-6 space-y-4 max-h-[85vh] overflow-y-auto">
+        <input type="hidden" id="entry-id">
+
+        <!-- Quick Pick from Saved PAN Card Holders -->
+        <div class="p-3.5 rounded-xl bg-indigo-950/30 border border-indigo-500/40 space-y-2">
+          <div class="flex items-center justify-between">
+            <label class="text-xs font-bold text-indigo-300 flex items-center gap-1.5">
+              <i class="fa-solid fa-bolt text-amber-400"></i>
+              <span>Quick Select PAN Card Holder:</span>
+            </label>
+            <span class="text-[10px] text-slate-400 font-normal">Search by name or code</span>
+          </div>
+
+          <!-- Search Input with Live Results Dropdown -->
+          <div class="relative" id="quick-pan-search-container">
+            <div class="relative flex items-center">
+              <i class="fa-solid fa-magnifying-glass absolute left-3 text-indigo-400 text-xs pointer-events-none"></i>
+              <input type="text" 
+                     id="entry-pan-search-input" 
+                     placeholder="Search by name or code (e.g. Ramesh, H01)..." 
+                     autocomplete="off"
+                     oninput="App.onSearchQuickSelectPan(this.value)" 
+                     onfocus="App.openQuickPanDropdown()"
+                     onkeydown="App.onQuickPanKeydown(event)"
+                     class="w-full bg-slate-900 border border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-lg pl-8 pr-8 py-2 text-xs text-white placeholder-slate-500 transition shadow-sm">
+              <button type="button" 
+                      id="entry-pan-search-clear" 
+                      onclick="App.clearQuickPanSearch()" 
+                      class="absolute right-2 text-slate-400 hover:text-white hidden text-xs p-1 rounded transition" 
+                      title="Clear search">
+                <i class="fa-solid fa-circle-xmark"></i>
+              </button>
+            </div>
+
+            <!-- Floating Search Results Dropdown -->
+            <div id="quick-pan-results-list" 
+                 class="hidden absolute left-0 right-0 top-full mt-1.5 z-50 max-h-56 overflow-y-auto bg-slate-900 border border-slate-700 rounded-xl shadow-2xl divide-y divide-slate-800 text-xs">
+              <!-- Dynamically populated via App.renderQuickPanSearchResults() -->
+            </div>
+          </div>
+
+          <!-- Native Dropdown Selector for Direct Pick / Fallback -->
+          <div class="space-y-1">
+            <select id="entry-select-fixed-pan" 
+                    onchange="App.onSelectFixedPanDropdown(this.value)" 
+                    class="w-full bg-slate-900 border border-slate-700/80 rounded-lg px-3 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-indigo-500 transition">
+              <!-- Dynamically populated -->
+            </select>
+          </div>
+        </div>
+
+        <!-- Names (NO PAN FIELD) -->
+        <div class="space-y-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-200 mb-1">
+              Holder Name <span class="text-rose-400">*</span>
+            </label>
+            <input type="text" id="entry-name-x" required placeholder="e.g. Ramesh Patel" oninput="App.recomputeModalPreview()" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1">
+                Middleman / Referrer Name <span class="text-slate-500">(Optional)</span>
+              </label>
+              <input type="text" id="entry-name-y" placeholder="e.g. Mukesh Bhai (or leave blank)" oninput="App.recomputeModalPreview()" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1">
+                Partner / Coordinator Name <span class="text-slate-500">(Optional)</span>
+              </label>
+              <input type="text" id="entry-name-z" placeholder="e.g. Dinesh Vyas (or leave blank)" oninput="App.recomputeModalPreview()" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+            </div>
+          </div>
+        </div>
+
+        <!-- Buy & Sell Price -->
+        <div class="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-300 uppercase tracking-wider block">Investment & Exit Values</span>
+            <span class="text-[10px] text-emerald-400 font-mono bg-slate-900 px-2 py-0.5 rounded border border-slate-800">Any Amount</span>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <label class="block text-xs font-semibold text-slate-300">
+                  Applied / Bought At (₹) <span class="text-rose-400">*</span>
+                </label>
+                <!-- Option To make a Fixed or Variable Amount -->
+                <div class="inline-flex rounded-lg bg-slate-900 p-0.5 border border-slate-700 text-[10px]">
+                  <button type="button" 
+                          id="entry-cost-mode-fixed" 
+                          onclick="App.setEntryCostMode('fixed')" 
+                          class="px-2 py-0.5 rounded font-semibold transition bg-indigo-600 text-white shadow-sm flex items-center gap-1"
+                          title="Fixed amount across allotments in this IPO">
+                    <i class="fa-solid fa-lock text-[9px]"></i> Fixed
+                  </button>
+                  <button type="button" 
+                          id="entry-cost-mode-variable" 
+                          onclick="App.setEntryCostMode('variable')" 
+                          class="px-2 py-0.5 rounded font-medium text-slate-400 hover:text-white transition flex items-center gap-1"
+                          title="Variable / custom amount for this allotment">
+                    <i class="fa-solid fa-sliders text-[9px]"></i> Variable
+                  </button>
+                </div>
+              </div>
+              <input type="hidden" id="entry-cost-mode" value="fixed">
+
+              <div class="relative">
+                <input type="number" 
+                       id="entry-cost" 
+                       required 
+                       step="any" 
+                       placeholder="e.g. 14000" 
+                       value="14000" 
+                       oninput="App.onEntryCostInput()" 
+                       class="w-full bg-slate-900 border border-slate-700 rounded-lg pl-3 pr-16 py-2 text-xs text-white font-mono font-bold focus:outline-none focus:border-indigo-500">
+                <span id="entry-cost-mode-badge" class="absolute right-2.5 top-2 text-[10px] px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-semibold font-sans pointer-events-none">
+                  Fixed
+                </span>
+              </div>
+
+              <!-- Fixed Mode Helper & IPO Default Sync -->
+              <div id="entry-cost-fixed-helper" class="space-y-1 mt-1">
+                <div class="flex items-center justify-between text-[10px] text-slate-400">
+                  <span id="entry-cost-fixed-hint" class="flex items-center gap-1 text-indigo-300">
+                    <i class="fa-solid fa-circle-check text-[9px] text-indigo-400"></i> Fixed standard lot cost for this IPO
+                  </span>
+                  <button type="button" 
+                          id="btn-sync-fixed-cost" 
+                          onclick="App.applyIpoFixedCostToInput()" 
+                          class="text-indigo-400 hover:text-indigo-300 text-[10px] underline underline-offset-2 hidden">
+                    Reset to IPO Fixed
+                  </button>
+                </div>
+                <label class="flex items-center gap-1.5 text-[10px] text-slate-400 hover:text-slate-300 cursor-pointer pt-0.5">
+                  <input type="checkbox" id="entry-cost-save-ipo-default" checked class="rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 text-xs">
+                  <span>Set as default Fixed cost for <strong id="entry-cost-ipo-name" class="text-white">this IPO</strong></span>
+                </label>
+              </div>
+
+              <!-- Variable Mode Quick Lot Multipliers & Helper -->
+              <div id="entry-cost-variable-helper" class="hidden space-y-1 mt-1.5">
+                <div class="flex items-center justify-between text-[10px]">
+                  <span class="text-amber-400 flex items-center gap-1 font-medium">
+                    <i class="fa-solid fa-sliders text-[9px]"></i> Variable / custom allotment amount
+                  </span>
+                </div>
+                <div class="flex items-center gap-1 flex-wrap pt-0.5">
+                  <span class="text-[9px] text-slate-500 font-medium mr-0.5">Quick Lots:</span>
+                  <button type="button" onclick="App.applyVariableLotMultiplier(1)" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] text-slate-300 font-mono transition" title="1 Lot">1x</button>
+                  <button type="button" onclick="App.applyVariableLotMultiplier(2)" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] text-slate-300 font-mono transition" title="2 Lots">2x</button>
+                  <button type="button" onclick="App.applyVariableLotMultiplier(3)" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] text-slate-300 font-mono transition" title="3 Lots">3x</button>
+                  <button type="button" onclick="App.applyVariableLotMultiplier(4)" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] text-slate-300 font-mono transition" title="4 Lots">4x</button>
+                  <button type="button" onclick="App.applyVariableLotMultiplier(5)" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] text-slate-300 font-mono transition" title="5 Lots">5x</button>
+                  <button type="button" onclick="App.applyVariableLotMultiplier(14)" class="px-1.5 py-0.5 rounded bg-indigo-950/60 border border-indigo-700/50 hover:bg-indigo-900 text-[10px] text-indigo-300 font-mono transition" title="14 Lots (sHNI category)">sHNI (14x)</button>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <label class="block text-xs text-slate-400">Sold Lot At (₹) <span class="text-rose-400">*</span></label>
+              </div>
+              <input type="number" id="entry-sell" required step="any" placeholder="e.g. 18000" value="18000" oninput="App.recomputeModalPreview()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-emerald-400 font-mono font-bold focus:outline-none focus:border-emerald-500">
+              <span class="text-[10px] text-slate-500 block mt-1">Enter any amount</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Split Rules: Percentage vs Direct Amount -->
+        <div class="p-3.5 rounded-xl bg-slate-950/40 border border-slate-800/80 space-y-3">
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <span class="text-xs font-semibold text-indigo-300 uppercase tracking-wider flex items-center gap-1.5">
+              <i class="fa-solid fa-calculator text-indigo-400"></i> Split Method
+            </span>
+            <!-- Toggle buttons for Percentage vs Direct Amount -->
+            <div class="inline-flex rounded-lg bg-slate-900 p-0.5 border border-slate-700 text-xs">
+              <button type="button" id="entry-split-type-pct" onclick="App.setEntrySplitType('percentage')" class="px-2.5 py-1 rounded-md font-semibold transition bg-indigo-600 text-white shadow-sm flex items-center gap-1">
+                <i class="fa-solid fa-percent text-[10px]"></i> Percentage Split
+              </button>
+              <button type="button" id="entry-split-type-amt" onclick="App.setEntrySplitType('amount')" class="px-2.5 py-1 rounded-md font-medium text-slate-400 hover:text-white transition flex items-center gap-1">
+                <i class="fa-solid fa-indian-rupee-sign text-[10px]"></i> Direct Amount
+              </button>
+            </div>
+          </div>
+          <input type="hidden" id="entry-split-type" value="percentage">
+
+          <!-- Option 1: Percentage Split Inputs -->
+          <div id="entry-split-pct-container" class="space-y-1">
+            <div class="grid grid-cols-3 gap-2">
+              <div>
+                <label class="block text-[11px] text-slate-400 mb-0.5">Holder (%)</label>
+                <input type="number" id="entry-pct-x" value="10" min="0" max="100" oninput="App.recomputeModalPreview()" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-white font-mono focus:outline-none">
+                <span id="entry-pct-x-hint" class="text-[9px] text-slate-500 block mt-0.5">10% of profit</span>
+              </div>
+
+              <div>
+                <label class="block text-[11px] text-slate-400 mb-0.5">Middleman (%)</label>
+                <input type="number" id="entry-pct-y" value="10" min="0" max="100" oninput="App.recomputeModalPreview()" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-white font-mono focus:outline-none">
+                <span id="entry-pct-y-hint" class="text-[9px] text-slate-500 block mt-0.5">10% of holder</span>
+              </div>
+
+              <div>
+                <label class="block text-[11px] text-slate-400 mb-0.5">Partner (%)</label>
+                <input type="number" id="entry-pct-z" value="15" min="0" max="100" oninput="App.recomputeModalPreview()" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-white font-mono focus:outline-none">
+                <span id="entry-pct-z-hint" class="text-[9px] text-slate-500 block mt-0.5">15% of remaining</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Option 2: Direct Amount Inputs -->
+          <div id="entry-split-amt-container" class="hidden space-y-2">
+            <div class="grid grid-cols-3 gap-2">
+              <div>
+                <label class="block text-[11px] text-emerald-400 font-medium mb-0.5">Holder Pay (₹) <span class="text-rose-400">*</span></label>
+                <input type="number" id="entry-amt-x" value="500" step="any" min="0" oninput="App.recomputeModalPreview()" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-white font-mono focus:outline-none focus:border-emerald-500">
+                <span class="text-[9px] text-slate-500 block mt-0.5">Fixed direct ₹ to holder</span>
+              </div>
+
+              <div>
+                <label class="block text-[11px] text-amber-400 font-medium mb-0.5">Middleman Pay (₹)</label>
+                <input type="number" id="entry-amt-y" value="0" step="any" min="0" oninput="App.recomputeModalPreview()" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-white font-mono focus:outline-none focus:border-amber-500">
+                <span class="text-[9px] text-slate-500 block mt-0.5">Fixed direct ₹ (optional)</span>
+              </div>
+
+              <div>
+                <label class="block text-[11px] text-purple-400 font-medium mb-0.5">Partner Pay (₹)</label>
+                <input type="number" id="entry-amt-z" value="0" step="any" min="0" oninput="App.recomputeModalPreview()" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-white font-mono focus:outline-none focus:border-purple-500">
+                <span class="text-[9px] text-slate-500 block mt-0.5">Fixed direct ₹ (optional)</span>
+              </div>
+            </div>
+
+            <label class="flex items-center gap-2 cursor-pointer pt-1 text-[11px] text-slate-400 hover:text-slate-300">
+              <input type="checkbox" id="entry-amt-pay-loss" onchange="App.recomputeModalPreview()" class="rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 text-xs">
+              <span>Pay holder fixed amount even if loss occurs (default: ₹0 payout on loss)</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Settlement Status & Date -->
+        <div class="p-3.5 rounded-xl bg-slate-950/40 border border-slate-800/80 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+              <i class="fa-regular fa-calendar-check text-emerald-400"></i> Settlement Status & Date
+            </span>
+            <span class="text-[11px] text-slate-500">Record when settled</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+            <label class="flex items-center gap-2.5 cursor-pointer bg-slate-900 border border-slate-700/80 rounded-lg px-3 py-2">
+              <input type="checkbox" id="entry-is-settled" onchange="App.onEntrySettleCheckboxChange()" class="rounded bg-slate-800 border-slate-700 text-emerald-500 focus:ring-0">
+              <span class="text-xs font-medium text-slate-200">Already Settled / Paid</span>
+            </label>
+
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-0.5">Settlement Date</label>
+              <input type="date" id="entry-settle-date" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white font-mono focus:outline-none focus:border-indigo-500">
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Calculation Preview Box -->
+        <div class="p-4 rounded-xl bg-gradient-to-br from-slate-950 to-indigo-950/30 border border-indigo-500/40 space-y-2.5">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+            <span class="text-xs font-semibold text-slate-300" id="modal-preview-profit-label">Total Outcome:</span>
+            <span class="text-base font-bold text-cyan-400 font-mono" id="modal-preview-profit">₹4,000</span>
+          </div>
+
+          <div class="space-y-1.5 text-xs">
+            <div class="flex justify-between items-center text-slate-300" id="modal-preview-row-x">
+              <span><strong id="modal-preview-name-x" class="text-white">Ramesh Patel</strong>: <span id="modal-preview-label-x" class="text-slate-400 font-mono text-[11px]">10% of profit</span></span>
+              <span class="font-bold text-purple-300 font-mono" id="modal-preview-cut-x">₹400</span>
+            </div>
+
+            <div class="flex justify-between items-center text-slate-300" id="modal-preview-row-y">
+              <span><strong id="modal-preview-name-y" class="text-white">Mukesh Bhai</strong>: <span id="modal-preview-label-y" class="text-slate-400 font-mono text-[11px]">10% of Ramesh</span></span>
+              <span class="font-bold text-amber-300 font-mono" id="modal-preview-cut-y">₹40</span>
+            </div>
+
+            <div class="flex justify-between items-center text-slate-300" id="modal-preview-row-z">
+              <span><strong id="modal-preview-name-z" class="text-white">Dinesh Vyas</strong>: <span id="modal-preview-label-z" class="text-slate-400 font-mono text-[11px]">15% of remaining</span></span>
+              <span class="font-bold text-amber-300 font-mono" id="modal-preview-cut-z">₹534</span>
+            </div>
+
+            <div class="flex justify-between items-center text-emerald-400 font-bold pt-2 border-t border-slate-800" id="modal-preview-row-a">
+              <span id="modal-preview-label-a">Your Net Profit: <span class="text-xs text-emerald-300/80 font-normal">The Rest Amount</span></span>
+              <span class="text-base font-mono" id="modal-preview-cut-a">₹3,026</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="pt-3 border-t border-slate-800 flex items-center justify-end gap-3">
+          <button type="button" onclick="App.closeModal('modal-entry')" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition">
+            Cancel
+          </button>
+          <button type="submit" class="px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition shadow-md shadow-emerald-600/30">
+            Save Allotment Split
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: BULK ADD FROM PAN CARD HOLDERS TO CURRENT IPO -->
+  <div id="modal-bulk-import" class="modal-overlay hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/50">
+        <div>
+          <h3 class="font-bold text-white text-base flex items-center gap-2">
+            <i class="fa-solid fa-layer-group text-indigo-400"></i> Bulk Add PAN Card Holders to IPO
+          </h3>
+          <p class="text-xs text-slate-400 mt-0.5" id="bulk-modal-ipo-subtitle">Select multiple PAN card holders to add in one shot</p>
+        </div>
+        <button onclick="App.closeModal('modal-bulk-import')" class="text-slate-400 hover:text-white transition">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="p-6 space-y-4 max-h-[85vh] overflow-y-auto">
+        <!-- Global Buy & Sell Price for Bulk Addition -->
+        <div class="p-3.5 bg-slate-950/60 rounded-xl border border-slate-800 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-300 uppercase tracking-wider block">Bulk Buy & Sell Price</span>
+            <span class="text-[10px] text-emerald-400 font-mono bg-slate-900 px-2 py-0.5 rounded border border-slate-800">Any Amount</span>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <label class="block text-xs font-medium text-slate-400">Applied Cost per Person (₹) <span class="text-rose-400">*</span></label>
+              </div>
+              <input type="number" id="bulk-apply-cost" required step="any" placeholder="e.g. 14000" value="14000" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white font-mono font-bold focus:outline-none focus:border-indigo-500">
+              <span class="text-[10px] text-slate-500 block mt-1">Enter any amount</span>
+            </div>
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <label class="block text-xs font-medium text-slate-400">Sold Lot Value per Person (₹) <span class="text-rose-400">*</span></label>
+              </div>
+              <input type="number" id="bulk-sell-price" required step="any" placeholder="e.g. 18000" value="18000" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-emerald-400 font-mono font-bold focus:outline-none focus:border-emerald-500">
+              <span class="text-[10px] text-slate-500 block mt-1">Enter any amount</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Select People with Checkboxes (NO PAN) -->
+        <div class="space-y-2">
+          <div class="flex items-center justify-between text-xs">
+            <span class="font-semibold text-slate-300">Select PAN Card Holders:</span>
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="App.toggleAllBulkCheckboxes(true)" class="text-indigo-400 hover:text-indigo-300 font-medium">Select All</button>
+              <span class="text-slate-600">|</span>
+              <button type="button" onclick="App.toggleAllBulkCheckboxes(false)" class="text-slate-400 hover:text-slate-300 font-medium">Deselect All</button>
+            </div>
+          </div>
+
+          <div class="relative">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+            <input type="text" id="bulk-pans-search" oninput="App.filterBulkPansCheckboxes(this.value)" placeholder="Search PAN card holders by name or code..." class="w-full bg-slate-950 border border-slate-700 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+          </div>
+
+          <div id="bulk-pans-checkboxes-container" class="max-h-64 overflow-y-auto divide-y divide-slate-800/80 border border-slate-800 rounded-xl bg-slate-950/40 p-1">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="pt-3 border-t border-slate-800 flex items-center justify-end gap-3">
+          <button type="button" onclick="App.closeModal('modal-bulk-import')" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition">
+            Cancel
+          </button>
+          <button type="button" onclick="App.confirmBulkAddPans()" class="px-5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition shadow-md shadow-indigo-600/30">
+            Add Selected to IPO
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD / EDIT PAN CARD HOLDER (NO PAN NO UPI) -->
+  <div id="modal-fixed-pan" class="modal-overlay hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/50">
+        <h3 class="font-bold text-white text-base flex items-center gap-2" id="modal-fixed-pan-title">
+          <i class="fa-solid fa-user-plus text-indigo-400"></i> Add PAN Card Holder
+        </h3>
+        <button onclick="App.closeModal('modal-fixed-pan')" class="text-slate-400 hover:text-white transition">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <form id="form-fixed-pan" onsubmit="App.saveFixedPan(event)" class="p-6 space-y-4 max-h-[85vh] overflow-y-auto">
+        <input type="hidden" id="fixed-pan-id">
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-200 mb-1 flex items-center justify-between">
+              <span>Holder Code</span>
+              <span class="text-[10px] text-indigo-400 font-normal">Optional</span>
+            </label>
+            <input type="text" id="fp-code" placeholder="e.g. H01 or 01" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white font-mono uppercase focus:outline-none focus:border-indigo-500">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-200 mb-1">Holder Name <span class="text-rose-400">*</span></label>
+            <input type="text" id="fp-name" required placeholder="e.g. Ramesh Patel" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Phone Number <span class="text-slate-500 font-normal">(Optional)</span></label>
+            <input type="tel" id="fp-phone" placeholder="e.g. 9820011223" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Middleman / Referrer Name <span class="text-slate-500">(Optional)</span></label>
+            <input type="text" id="fp-middleman" placeholder="e.g. Mukesh Bhai" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Partner / Coordinator Name <span class="text-slate-500">(Optional)</span></label>
+            <input type="text" id="fp-partner" placeholder="e.g. Dinesh Vyas" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+          </div>
+        </div>
+
+        <!-- Default Split Rules (Percentage vs Direct Amount) -->
+        <div class="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2.5">
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <span class="text-xs font-semibold text-indigo-300 uppercase tracking-wider block">Default Split Rule</span>
+            <div class="inline-flex rounded-lg bg-slate-900 p-0.5 border border-slate-700 text-xs">
+              <button type="button" id="fp-split-type-pct" onclick="App.setFixedPanSplitType('percentage')" class="px-2 py-0.5 rounded-md font-semibold transition bg-indigo-600 text-white shadow-sm flex items-center gap-1">
+                <i class="fa-solid fa-percent text-[9px]"></i> Percentage
+              </button>
+              <button type="button" id="fp-split-type-amt" onclick="App.setFixedPanSplitType('amount')" class="px-2 py-0.5 rounded-md font-medium text-slate-400 hover:text-white transition flex items-center gap-1">
+                <i class="fa-solid fa-indian-rupee-sign text-[9px]"></i> Direct Amount
+              </button>
+            </div>
+          </div>
+          <input type="hidden" id="fp-split-type" value="percentage">
+
+          <!-- Option 1: Percentage -->
+          <div id="fp-split-pct-container">
+            <div class="grid grid-cols-3 gap-2 text-xs">
+              <div>
+                <label class="block text-[11px] text-slate-400 mb-0.5">Holder (%)</label>
+                <input type="number" id="fp-pct-x" value="10" min="0" max="100" oninput="App.updateFixedPanPctLabels()" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-white font-mono">
+                <span id="fp-pct-x-label" class="text-[9px] text-slate-500 block mt-0.5">10% of profit</span>
+              </div>
+              <div>
+                <label class="block text-[11px] text-slate-400 mb-0.5">Middleman (%)</label>
+                <input type="number" id="fp-pct-y" value="10" min="0" max="100" oninput="App.updateFixedPanPctLabels()" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-white font-mono">
+                <span id="fp-pct-y-label" class="text-[9px] text-slate-500 block mt-0.5">10% of holder</span>
+              </div>
+              <div>
+                <label class="block text-[11px] text-slate-400 mb-0.5">Partner (%)</label>
+                <input type="number" id="fp-pct-z" value="15" min="0" max="100" oninput="App.updateFixedPanPctLabels()" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-white font-mono">
+                <span id="fp-pct-z-label" class="text-[9px] text-slate-500 block mt-0.5">15% of remaining</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Option 2: Direct Amount -->
+          <div id="fp-split-amt-container" class="hidden space-y-2 text-xs">
+            <div class="grid grid-cols-3 gap-2">
+              <div>
+                <label class="block text-[11px] text-emerald-400 mb-0.5">Holder (₹)</label>
+                <input type="number" id="fp-amt-x" value="500" step="any" min="0" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-white font-mono focus:outline-none focus:border-emerald-500">
+                <span class="text-[9px] text-slate-500 block mt-0.5">Fixed ₹ per allotment</span>
+              </div>
+              <div>
+                <label class="block text-[11px] text-amber-400 mb-0.5">Middleman (₹)</label>
+                <input type="number" id="fp-amt-y" value="0" step="any" min="0" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-white font-mono focus:outline-none focus:border-amber-500">
+                <span class="text-[9px] text-slate-500 block mt-0.5">Fixed ₹ (optional)</span>
+              </div>
+              <div>
+                <label class="block text-[11px] text-purple-400 mb-0.5">Partner (₹)</label>
+                <input type="number" id="fp-amt-z" value="0" step="any" min="0" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-white font-mono focus:outline-none focus:border-purple-500">
+                <span class="text-[9px] text-slate-500 block mt-0.5">Fixed ₹ (optional)</span>
+              </div>
+            </div>
+
+            <label class="flex items-center gap-2 cursor-pointer pt-0.5 text-[11px] text-slate-400 hover:text-slate-300">
+              <input type="checkbox" id="fp-amt-pay-loss" class="rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 text-xs">
+              <span>Pay holder fixed amount even on loss</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-slate-800 flex items-center justify-end gap-3">
+          <button type="button" onclick="App.closeModal('modal-fixed-pan')" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition">
+            Cancel
+          </button>
+          <button type="submit" class="px-5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition shadow-md shadow-indigo-600/30">
+            Save PAN Card Holder
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD NEW IPO -->
+  <div id="modal-ipo" class="modal-overlay hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/50">
+        <h3 class="font-bold text-white text-base flex items-center gap-2">
+          <i class="fa-solid fa-folder-plus text-emerald-400"></i> Add New IPO
+        </h3>
+        <button onclick="App.closeModal('modal-ipo')" class="text-slate-400 hover:text-white transition">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <form id="form-ipo" onsubmit="App.saveIpo(event)" class="p-6 space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">IPO / Company Name <span class="text-rose-400">*</span></label>
+          <input type="text" id="new-ipo-name" required placeholder="e.g. Swiggy Ltd" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1 flex items-center justify-between">
+            <span>Standard / Fixed Applied Cost (₹)</span>
+            <span class="text-[10px] text-indigo-400 font-normal">Fixed per Lot</span>
+          </label>
+          <input type="number" id="new-ipo-fixed-cost" step="any" placeholder="e.g. 14000" value="14000" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-indigo-500">
+          <span class="text-[10px] text-slate-500 block mt-1">Default fixed applied amount for each allotment in this IPO</span>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-2">
+          <button type="button" onclick="App.closeModal('modal-ipo')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition">
+            Cancel
+          </button>
+          <button type="submit" class="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition">
+            Create IPO
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: LIVE INTERACTIVE CALCULATOR -->
+  <div id="modal-calc" class="modal-overlay hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/50">
+        <h3 class="font-bold text-white text-base flex items-center gap-2">
+          <i class="fa-solid fa-calculator text-amber-400"></i> Live Profit Split Calculator
+        </h3>
+        <button onclick="App.closeModal('modal-calc')" class="text-slate-400 hover:text-white transition">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="p-6 space-y-4">
+        <div class="p-3 bg-slate-950/60 rounded-xl border border-slate-800 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-300 uppercase tracking-wider block">Investment & Exit Values</span>
+            <span class="text-[10px] text-emerald-400 font-mono bg-slate-900 px-2 py-0.5 rounded border border-slate-800">Any Amount</span>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <label class="block text-xs text-slate-400">Buy / Apply (₹)</label>
+              </div>
+              <input type="number" id="calc-buy" step="any" placeholder="e.g. 14000" value="14000" oninput="App.recomputeLiveCalc()" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-indigo-500">
+              <span class="text-[10px] text-slate-500 block mt-1">Enter any amount</span>
+            </div>
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <label class="block text-xs text-slate-400">Sell Lot (₹)</label>
+              </div>
+              <input type="number" id="calc-sell" step="any" placeholder="e.g. 18000" value="18000" oninput="App.recomputeLiveCalc()" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-emerald-500">
+              <span class="text-[10px] text-slate-500 block mt-1">Enter any amount</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Calculator Split Mode Toggle -->
+        <div class="flex items-center justify-between bg-slate-950 p-1.5 rounded-xl border border-slate-800 text-xs">
+          <span class="text-[11px] text-slate-400 font-semibold px-2 flex items-center gap-1.5">
+            <i class="fa-solid fa-calculator text-amber-400"></i> Split Mode:
+          </span>
+          <div class="inline-flex rounded-lg bg-slate-900 p-0.5 border border-slate-700 text-xs">
+            <button type="button" id="calc-type-pct" onclick="App.setCalcSplitType('percentage')" class="px-2.5 py-1 rounded-md font-semibold bg-indigo-600 text-white text-[11px] transition shadow-sm">
+              <i class="fa-solid fa-percent text-[9px] mr-1"></i> Percentage
+            </button>
+            <button type="button" id="calc-type-amt" onclick="App.setCalcSplitType('amount')" class="px-2.5 py-1 rounded-md font-medium text-slate-400 hover:text-white text-[11px] transition">
+              <i class="fa-solid fa-indian-rupee-sign text-[9px] mr-1"></i> Direct Amount
+            </button>
+          </div>
+        </div>
+        <input type="hidden" id="calc-split-type" value="percentage">
+
+        <!-- Direct Amount inputs for Calculator (shown when Direct Amount is active) -->
+        <div id="calc-amt-inputs" class="hidden grid grid-cols-3 gap-2">
+          <div>
+            <label class="block text-[11px] text-emerald-400 mb-0.5">Holder (₹)</label>
+            <input type="number" id="calc-amt-x" value="500" step="any" min="0" oninput="App.recomputeLiveCalc()" class="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-white font-mono focus:outline-none focus:border-emerald-500">
+          </div>
+          <div>
+            <label class="block text-[11px] text-amber-400 mb-0.5">Middleman (₹)</label>
+            <input type="number" id="calc-amt-y" value="100" step="any" min="0" oninput="App.recomputeLiveCalc()" class="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-white font-mono focus:outline-none focus:border-amber-500">
+          </div>
+          <div>
+            <label class="block text-[11px] text-purple-400 mb-0.5">Partner (₹)</label>
+            <input type="number" id="calc-amt-z" value="300" step="any" min="0" oninput="App.recomputeLiveCalc()" class="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-white font-mono focus:outline-none focus:border-purple-500">
+          </div>
+        </div>
+
+        <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2 text-xs">
+          <div class="flex justify-between items-center text-slate-300">
+            <span id="calc-label-profit">Total Outcome:</span>
+            <span class="font-bold text-cyan-400 font-mono text-sm" id="calc-profit">₹4,000</span>
+          </div>
+          <div class="flex justify-between items-center text-slate-300" id="calc-row-x">
+            <span id="calc-label-x">Holder Share (10%):</span>
+            <span class="font-bold text-purple-300 font-mono" id="calc-cut-x">₹400</span>
+          </div>
+          <div class="flex justify-between items-center text-slate-300" id="calc-row-y">
+            <span id="calc-label-y">Middleman Share (10% of Holder):</span>
+            <span class="font-bold text-amber-300 font-mono" id="calc-cut-y">₹40</span>
+          </div>
+          <div class="flex justify-between items-center text-slate-300" id="calc-row-z">
+            <span id="calc-label-z">Partner Share (15%):</span>
+            <span class="font-bold text-amber-300 font-mono" id="calc-cut-z">₹534</span>
+          </div>
+          <div class="flex justify-between items-center text-emerald-400 font-bold pt-2 border-t border-slate-800 text-sm" id="calc-row-a">
+            <span id="calc-label-a">Your Net Outcome:</span>
+            <span class="font-mono text-base" id="calc-cut-a">₹3,026</span>
+          </div>
+        </div>
+
+        <button onclick="App.closeModal('modal-calc')" class="w-full py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold">
+          Close Calculator
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: SETTLE PERSON ACROSS IPOS WITH DATE PICKER -->
+  <div id="modal-settle-person" class="modal-overlay hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/50">
+        <h3 class="font-bold text-white text-base flex items-center gap-2">
+          <i class="fa-solid fa-handshake text-emerald-400"></i>
+          <span>Settle Balance: <strong id="settle-person-modal-name" class="text-indigo-400"></strong></span>
+        </h3>
+        <button onclick="App.closeModal('modal-settle-person')" class="text-slate-400 hover:text-white transition">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="p-6 space-y-4">
+        <!-- Settlement Amount Card -->
+        <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs text-slate-400" id="settle-person-modal-type-label">Amount to Settle:</span>
+            <span class="text-xl font-bold font-mono text-emerald-400" id="settle-person-modal-amount">₹0</span>
+          </div>
+          <div class="text-[11px] text-slate-400 border-t border-slate-800/80 pt-2 space-y-1" id="settle-person-modal-breakdown">
+            <!-- Pending IPOs list -->
+          </div>
+        </div>
+
+        <!-- Settlement Date Picker -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1 flex items-center justify-between">
+            <span>Settlement Date <span class="text-rose-400">*</span></span>
+            <button type="button" onclick="App.setSettlePersonDateToday()" class="text-[10px] text-indigo-400 hover:underline">Today</button>
+          </label>
+          <input type="date" id="settle-person-modal-date" required class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-indigo-500">
+          <p class="text-[10px] text-slate-500 mt-1">Select the date this balance is settled with the person.</p>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-800">
+          <button type="button" onclick="App.closeModal('modal-settle-person')" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition">
+            Cancel
+          </button>
+          <button type="button" id="btn-confirm-settle-person" onclick="App.confirmSettlePersonModal()" class="px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition shadow-md shadow-emerald-600/30 flex items-center gap-1.5">
+            <i class="fa-solid fa-check"></i>
+            <span>Confirm Settlement</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: QUICK EDIT SETTLEMENT DATE FOR SINGLE ALLOTMENT -->
+  <div id="modal-edit-date" class="modal-overlay hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/50">
+        <h3 class="font-bold text-white text-sm flex items-center gap-2">
+          <i class="fa-regular fa-calendar-check text-indigo-400"></i>
+          <span>Settlement Date</span>
+        </h3>
+        <button onclick="App.closeModal('modal-edit-date')" class="text-slate-400 hover:text-white transition">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="p-5 space-y-4">
+        <div>
+          <div class="text-xs font-bold text-white" id="edit-date-modal-name">Ramesh Patel</div>
+          <div class="text-[11px] text-slate-400" id="edit-date-modal-ipo">IPO Name</div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1 flex items-center justify-between">
+            <span>Settled On Date</span>
+            <button type="button" onclick="App.setEditDateModalToday()" class="text-[10px] text-indigo-400 hover:underline">Today</button>
+          </label>
+          <input type="date" id="edit-date-modal-input" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-indigo-500">
+        </div>
+
+        <div class="flex items-center justify-between pt-2 border-t border-slate-800">
+          <button type="button" onclick="App.markEntryPendingFromDateModal()" class="text-xs text-rose-400 hover:text-rose-300 font-medium">
+            Mark as Pending
+          </button>
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="App.closeModal('modal-edit-date')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium">
+              Cancel
+            </button>
+            <button type="button" onclick="App.saveEditDateModal()" class="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-sm">
+              Save Date
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: FREE MULTI-LAPTOP CLOUD SYNC -->
+  <div id="modal-cloud-sync" class="modal-overlay hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/50">
+        <h3 class="font-bold text-white text-base flex items-center gap-2">
+          <i class="fa-solid fa-cloud-arrow-up text-sky-400"></i>
+          <span>Multi-Laptop Cloud Sync</span>
+        </h3>
+        <button onclick="App.closeModal('modal-cloud-sync')" class="text-slate-400 hover:text-white transition">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+        <!-- Live Status Card -->
+        <div id="cloud-status-box" class="p-4 rounded-xl border flex items-center justify-between bg-slate-950/60 border-slate-800">
+          <div class="flex items-center gap-3">
+            <div id="cloud-status-dot" class="w-3.5 h-3.5 rounded-full bg-slate-500 animate-pulse"></div>
+            <div>
+              <div id="cloud-status-title" class="text-xs font-bold text-white">Checking status...</div>
+              <div id="cloud-status-subtitle" class="text-[11px] text-slate-400">Local storage active</div>
+            </div>
+          </div>
+          <button type="button" id="btn-cloud-push-now" onclick="App.pushLocalToCloudManual()" class="hidden px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-semibold transition flex items-center gap-1.5 shadow">
+            <i class="fa-solid fa-cloud-arrow-up"></i> Push Local Data to Cloud
+          </button>
+        </div>
+
+        <!-- Room / Workspace Identifier -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">
+            Workspace / Sync Room Name
+          </label>
+          <input type="text" id="cloud-room-input" value="main_workspace" placeholder="e.g. main_workspace" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-sky-500">
+          <span class="text-[11px] text-slate-400 mt-1 block">All laptops using this same room name will sync together in real time.</span>
+        </div>
+
+        <!-- Firebase Config Input -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1 flex items-center justify-between">
+            <span>Firebase Realtime Database Config</span>
+            <span class="text-[10px] text-slate-500 font-normal">Free Google Tier</span>
+          </label>
+          <textarea id="cloud-config-textarea" rows="6" placeholder='Paste your firebaseConfig here (from Firebase console), e.g.:&#10;{&#10;  apiKey: "AIzaSy...",&#10;  authDomain: "myproject.firebaseapp.com",&#10;  databaseURL: "https://myproject-default-rtdb.firebaseio.com",&#10;  projectId: "myproject",&#10;  ...&#10;}' class="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-xs text-white font-mono focus:outline-none focus:border-sky-500 resize-none"></textarea>
+          <span class="text-[11px] text-slate-400 mt-1 block">
+            💡 Tip: Or paste it once into <code class="text-sky-300">config.js</code> in this folder so all laptops connect automatically upon opening!
+          </span>
+        </div>
+
+        <!-- 3-Step Setup Instructions Accordion / Card -->
+        <div class="p-3.5 rounded-xl bg-slate-950/40 border border-slate-800/80 space-y-2">
+          <span class="text-xs font-semibold text-sky-400 uppercase tracking-wider block flex items-center gap-1.5">
+            <i class="fa-solid fa-circle-question"></i> How to get your free Firebase database (2 mins):
+          </span>
+          <ol class="text-xs text-slate-300 space-y-1.5 list-decimal list-inside leading-relaxed">
+            <li>Open <a href="https://console.firebase.google.com" target="_blank" class="text-sky-400 underline font-semibold hover:text-sky-300">console.firebase.google.com</a> and click <strong>"Create a project"</strong>.</li>
+            <li>In the left sidebar, click <strong>Build &rarr; Realtime Database</strong> &rarr; <strong>Create Database</strong> (select <strong>"Start in test mode"</strong>).</li>
+            <li>Click <strong>Project Settings (⚙️)</strong> &rarr; <strong>General</strong> &rarr; scroll to <strong>"Your apps"</strong> &rarr; click Web (<strong>&lt;/&gt;</strong>) &rarr; copy the <code class="text-amber-300 font-mono">firebaseConfig</code> and paste it above!</li>
+          </ol>
+        </div>
+
+        <!-- Modal Actions -->
+        <div class="flex items-center justify-between pt-3 border-t border-slate-800">
+          <button type="button" onclick="App.disconnectCloudSync()" id="btn-cloud-disconnect" class="text-xs text-rose-400 hover:text-rose-300 font-medium">
+            Disconnect Cloud
+          </button>
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="App.closeModal('modal-cloud-sync')" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition">
+              Close
+            </button>
+            <button type="button" onclick="App.saveCloudSyncConfig()" class="px-5 py-2 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold transition shadow-md shadow-sky-600/30">
+              Save &amp; Connect Cloud
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Center -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 space-y-2 pointer-events-none"></div>
+
+  <!-- Firebase Realtime Database SDK (Free Multi-Laptop Sync) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <script src="config.js"></script>
+
+  <!-- JavaScript -->
+  <script src="app.js"></script>
+</body>
+</html>
