@@ -73,6 +73,7 @@ const App = {
 
     this.renderAll();
     this.initCloudSync();
+    this.initKeyboardShortcuts();
   },
 
   loadState() {
@@ -346,6 +347,10 @@ const App = {
     this.setFixedPanSplitType('percentage');
     this.updateFixedPanPctLabels();
     this.openModal('modal-fixed-pan');
+    setTimeout(() => {
+      const el = document.getElementById('fp-name');
+      if (el) { el.focus(); el.select(); }
+    }, 50);
   },
 
   openEditFixedPanModal(id) {
@@ -378,6 +383,10 @@ const App = {
     this.setFixedPanSplitType(pan.splitType === 'amount' ? 'amount' : 'percentage');
     this.updateFixedPanPctLabels();
     this.openModal('modal-fixed-pan');
+    setTimeout(() => {
+      const el = document.getElementById('fp-name');
+      if (el) { el.focus(); el.select(); }
+    }, 50);
   },
 
   updateFixedPanPctLabels() {
@@ -505,6 +514,10 @@ const App = {
     const fixedInput = document.getElementById('new-ipo-fixed-cost');
     if (fixedInput) fixedInput.value = 14000;
     this.openModal('modal-ipo');
+    setTimeout(() => {
+      const el = document.getElementById('new-ipo-name');
+      if (el) { el.focus(); el.select(); }
+    }, 50);
   },
 
   saveIpo(e) {
@@ -1802,6 +1815,10 @@ const App = {
 
     this.recomputeModalPreview();
     this.openModal('modal-entry');
+    setTimeout(() => {
+      const el = document.getElementById('entry-pan-search-input');
+      if (el) { el.focus(); el.select(); }
+    }, 50);
   },
 
   populateFixedPanDropdown(filterText = '') {
@@ -2123,6 +2140,10 @@ const App = {
 
     this.recomputeModalPreview();
     this.openModal('modal-entry');
+    setTimeout(() => {
+      const el = document.getElementById('entry-pan-search-input');
+      if (el) { el.focus(); el.select(); }
+    }, 50);
   },
 
   onEntrySettleCheckboxChange() {
@@ -2644,6 +2665,10 @@ const App = {
     }
 
     this.openModal('modal-bulk-import');
+    setTimeout(() => {
+      const el = document.getElementById('bulk-pans-search');
+      if (el) { el.focus(); el.select(); }
+    }, 50);
   },
 
   filterBulkPansCheckboxes(query) {
@@ -2765,6 +2790,10 @@ const App = {
 
     this.recomputeLiveCalc();
     this.openModal('modal-calc');
+    setTimeout(() => {
+      const el = document.getElementById('calc-sell');
+      if (el) { el.focus(); el.select(); }
+    }, 50);
   },
 
   setCalcSplitType(type) {
@@ -3157,6 +3186,277 @@ const App = {
     if (modal) modal.classList.add('hidden');
   },
 
+  getOpenModal() {
+    const modals = Array.from(document.querySelectorAll('.modal-overlay')).filter(m => !m.classList.contains('hidden'));
+    return modals[modals.length - 1] || null;
+  },
+
+  closeTopModal() {
+    const modal = this.getOpenModal();
+    if (modal) {
+      this.closeModal(modal.id);
+      return true;
+    }
+    return false;
+  },
+
+  submitTopModal() {
+    const modal = this.getOpenModal();
+    if (!modal) return false;
+
+    if (modal.id === 'modal-entry') {
+      const form = document.getElementById('form-entry');
+      if (form) {
+        if (typeof form.requestSubmit === 'function') form.requestSubmit();
+        else form.dispatchEvent(new Event('submit', { cancelable: true }));
+        return true;
+      }
+    } else if (modal.id === 'modal-fixed-pan') {
+      const form = document.getElementById('form-fixed-pan');
+      if (form) {
+        if (typeof form.requestSubmit === 'function') form.requestSubmit();
+        else form.dispatchEvent(new Event('submit', { cancelable: true }));
+        return true;
+      }
+    } else if (modal.id === 'modal-ipo') {
+      const form = document.getElementById('form-ipo');
+      if (form) {
+        if (typeof form.requestSubmit === 'function') form.requestSubmit();
+        else form.dispatchEvent(new Event('submit', { cancelable: true }));
+        return true;
+      }
+    } else if (modal.id === 'modal-bulk-import') {
+      this.submitBulkImport();
+      return true;
+    } else if (modal.id === 'modal-settle-person') {
+      this.confirmSettlePersonModal();
+      return true;
+    } else if (modal.id === 'modal-edit-date') {
+      this.saveEditDateModal();
+      return true;
+    } else if (modal.id === 'modal-calc') {
+      this.closeModal('modal-calc');
+      return true;
+    } else if (modal.id === 'modal-shortcuts') {
+      this.closeModal('modal-shortcuts');
+      return true;
+    }
+    return false;
+  },
+
+  openShortcutsModal() {
+    this.openModal('modal-shortcuts');
+  },
+
+  closeShortcutsModal() {
+    this.closeModal('modal-shortcuts');
+  },
+
+  toggleShortcutsModal() {
+    const modal = document.getElementById('modal-shortcuts');
+    if (modal && !modal.classList.contains('hidden')) {
+      this.closeModal('modal-shortcuts');
+    } else {
+      this.openModal('modal-shortcuts');
+    }
+  },
+
+  selectNextIpo() {
+    if (!this.state.ipos || this.state.ipos.length <= 1) return;
+    const idx = this.state.ipos.findIndex(i => i.id === this.state.activeIpoId);
+    const nextIdx = (idx + 1) % this.state.ipos.length;
+    this.selectIpo(this.state.ipos[nextIdx].id);
+    this.showToast(`Switched to IPO: ${this.state.ipos[nextIdx].name}`, 'info');
+  },
+
+  selectPrevIpo() {
+    if (!this.state.ipos || this.state.ipos.length <= 1) return;
+    const idx = this.state.ipos.findIndex(i => i.id === this.state.activeIpoId);
+    const prevIdx = (idx - 1 + this.state.ipos.length) % this.state.ipos.length;
+    this.selectIpo(this.state.ipos[prevIdx].id);
+    this.showToast(`Switched to IPO: ${this.state.ipos[prevIdx].name}`, 'info');
+  },
+
+  focusActiveSearch() {
+    if (this.state.currentView === 'master') {
+      const input = document.getElementById('search-master-input');
+      if (input) {
+        input.focus();
+        input.select();
+      }
+    } else if (this.state.currentView === 'fixed-pans') {
+      const input = document.getElementById('search-fixed-pan-input');
+      if (input) {
+        input.focus();
+        input.select();
+      }
+    } else {
+      // In IPO splits view: open Add Entry modal with quick search focused
+      this.openAddEntryModal();
+    }
+  },
+
+  initKeyboardShortcuts() {
+    document.addEventListener('keydown', (e) => {
+      const tag = (e.target.tagName || '').toLowerCase();
+      const isInput = tag === 'input' || tag === 'textarea' || tag === 'select' || e.target.isContentEditable;
+      const openModal = this.getOpenModal();
+
+      // 1. ESCAPE key: always handles closing top modal or dropdown or blurring
+      if (e.key === 'Escape') {
+        const listEl = document.getElementById('quick-pan-results-list');
+        if (listEl && !listEl.classList.contains('hidden')) {
+          this.closeQuickPanDropdown();
+          e.preventDefault();
+          return;
+        }
+        if (openModal) {
+          this.closeModal(openModal.id);
+          e.preventDefault();
+          return;
+        }
+        if (isInput) {
+          e.target.blur();
+          e.preventDefault();
+          return;
+        }
+        return;
+      }
+
+      // 2. CTRL+ENTER / CMD+ENTER: save/submit current active modal
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        if (openModal) {
+          e.preventDefault();
+          this.submitTopModal();
+          return;
+        }
+      }
+
+      // 3. In Bulk Import Modal: Alt+A (select all) / Alt+D (deselect all)
+      if (openModal && openModal.id === 'modal-bulk-import') {
+        if (e.altKey && (e.key === 'a' || e.key === 'A')) {
+          e.preventDefault();
+          this.toggleAllBulkCheckboxes(true);
+          return;
+        }
+        if (e.altKey && (e.key === 'd' || e.key === 'D')) {
+          e.preventDefault();
+          this.toggleAllBulkCheckboxes(false);
+          return;
+        }
+      }
+
+      // If a modal is open (other than shortcuts cheat sheet), don't process global hotkeys
+      if (openModal && openModal.id !== 'modal-shortcuts') {
+        return;
+      }
+
+      // 4. Toggle shortcuts cheat sheet modal with '?'
+      if (e.key === '?' && !isInput) {
+        e.preventDefault();
+        this.toggleShortcutsModal();
+        return;
+      }
+
+      // 5. Focus search with '/' or Ctrl+K (when not typing in an input)
+      if ((e.key === '/' || ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K'))) && !isInput) {
+        e.preventDefault();
+        this.focusActiveSearch();
+        return;
+      }
+
+      // If typing in an input/textarea/select, do NOT execute single-letter hotkeys
+      if (isInput) return;
+
+      // Do not trigger if Ctrl/Cmd is held (except Ctrl+E for export)
+      if (e.ctrlKey || e.metaKey) {
+        if (e.key === 'e' || e.key === 'E') {
+          e.preventDefault();
+          this.exportCurrentViewToExcel();
+        }
+        return;
+      }
+
+      const key = e.key.toLowerCase();
+
+      // Navigation: 1, 2, 3
+      if (key === '1') {
+        e.preventDefault();
+        this.switchView('ipos');
+        return;
+      }
+      if (key === '2') {
+        e.preventDefault();
+        this.switchView('master');
+        return;
+      }
+      if (key === '3') {
+        e.preventDefault();
+        this.switchView('fixed-pans');
+        return;
+      }
+
+      // Next / Prev IPO: [ and ] or PageUp / PageDown
+      if (e.key === '[' || e.key === 'PageUp') {
+        e.preventDefault();
+        this.selectPrevIpo();
+        return;
+      }
+      if (e.key === ']' || e.key === 'PageDown') {
+        e.preventDefault();
+        this.selectNextIpo();
+        return;
+      }
+
+      // Daily Actions
+      if (key === 'a' || key === 'n') {
+        e.preventDefault();
+        if (this.state.currentView !== 'ipos') this.switchView('ipos');
+        this.openAddEntryModal();
+        return;
+      }
+      if (key === 'b') {
+        e.preventDefault();
+        if (this.state.currentView !== 'ipos') this.switchView('ipos');
+        this.openBulkImportModal();
+        return;
+      }
+      if (key === 'i') {
+        e.preventDefault();
+        this.openAddIpoModal();
+        return;
+      }
+      if (key === 'p') {
+        e.preventDefault();
+        if (this.state.currentView !== 'fixed-pans') this.switchView('fixed-pans');
+        this.openAddFixedPanModal();
+        return;
+      }
+      if (key === 's') {
+        e.preventDefault();
+        if (this.state.currentView === 'ipos') {
+          this.masterToggleSettleCurrentIpo();
+        }
+        return;
+      }
+      if (key === 'e') {
+        e.preventDefault();
+        this.exportCurrentViewToExcel();
+        return;
+      }
+      if (key === 'c') {
+        e.preventDefault();
+        this.openCalculatorModal();
+        return;
+      }
+      if (key === 'f') {
+        e.preventDefault();
+        this.focusActiveSearch();
+        return;
+      }
+    });
+  },
+
   copyToClipboard(text, label = 'Text') {
     if (!text) return;
     navigator.clipboard.writeText(text).then(() => {
@@ -3480,6 +3780,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const container = document.getElementById('quick-pan-search-container');
     if (container && !container.contains(e.target)) {
       App.closeQuickPanDropdown();
+    }
+    // Close modal when clicking on the backdrop overlay
+    if (e.target && e.target.classList && e.target.classList.contains('modal-overlay')) {
+      App.closeModal(e.target.id);
     }
   });
 });

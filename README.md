@@ -101,5 +101,30 @@ Sync all your IPO allotments, PAN card holders, and settlement calculations live
 
 ---
 
+## ⌨️ Power-User Keyboard Shortcuts
+
+You can operate almost the entire application without touching the mouse:
+
+| Category | Shortcut | Action |
+| :--- | :--- | :--- |
+| **Navigation** | `1` | Switch to **IPO Profit Splits** view |
+| | `2` | Switch to **Master IPO Sheet** view |
+| | `3` | Switch to **PAN Card Holders** view |
+| | `[` / `]` | Switch to **Previous / Next IPO Tab** |
+| | `/` or `Ctrl + K` | **Focus Search Bar** in current view |
+| **Core Daily Actions** | `A` or `N` | **+ Add Single Allotment Split** (auto-focuses holder search) |
+| | `B` | **Bulk Add PAN Card Holders** (auto-focuses bulk search) |
+| | `I` | **Create New IPO** (auto-focuses name) |
+| | `P` | **+ Add PAN Card Holder** (auto-focuses name) |
+| | `S` | **Master Settle Current IPO** |
+| **Tools & Exports** | `E` or `Ctrl + E` | **Export Formatted Excel Table** |
+| | `C` | **Open Profit & Loss Calculator** |
+| | `?` | **Toggle Keyboard Shortcuts Cheat Sheet** |
+| **Inside Any Modal** | `Ctrl + Enter` | **Save / Confirm / Submit Form** immediately |
+| | `Esc` | **Close Modal** / Close Dropdown / Unfocus |
+| | `Alt + A` / `Alt + D` | **Select All / Deselect All** in Bulk Add modal |
+
+---
+
 ## 🚀 How to Run
 Double-click **`start.bat`** (or open **`index.html`** in your browser).

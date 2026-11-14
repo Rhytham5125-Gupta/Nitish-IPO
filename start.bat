@@ -11,3 +11,4 @@ echo Done! You can bookmark the opened tab.
 echo Keep this folder safe to retain your data.
 echo.
 timeout /t 3 >nul
+

@@ -100,3 +100,22 @@ body {
     transform: translateY(0);
   }
 }
+
+/* Keyboard Shortcut Key Badges */
+kbd, .kbd-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  line-height: 1;
+  padding: 0.15rem 0.35rem;
+  border-radius: 0.35rem;
+  background-color: rgba(15, 23, 42, 0.85);
+  color: #94a3b8;
+  border: 1px solid rgba(51, 65, 85, 0.9);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+

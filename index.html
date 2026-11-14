@@ -62,32 +62,43 @@
       <div class="flex items-center gap-2.5">
         <!-- Section Toggle -->
         <div class="flex items-center bg-slate-900 border border-slate-800 p-1 rounded-xl">
-          <button id="btn-view-ipos" onclick="App.switchView('ipos')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition bg-indigo-600 text-white shadow-sm flex items-center gap-1.5">
+          <button id="btn-view-ipos" onclick="App.switchView('ipos')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition bg-indigo-600 text-white shadow-sm flex items-center gap-1.5" title="IPO Profit Splits (Press 1)">
             <i class="fa-solid fa-chart-pie"></i>
             <span>IPO Profit Splits</span>
+            <kbd class="hidden md:inline-block text-[9px] text-white/80 bg-indigo-700/80 border-indigo-400/40">1</kbd>
           </button>
-          <button id="btn-view-master" onclick="App.switchView('master')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition text-slate-400 hover:text-white flex items-center gap-1.5">
+          <button id="btn-view-master" onclick="App.switchView('master')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition text-slate-400 hover:text-white flex items-center gap-1.5" title="Master IPO Sheet (Press 2)">
             <i class="fa-solid fa-table-list"></i>
             <span>Master IPO Sheet</span>
+            <kbd class="hidden md:inline-block text-[9px]">2</kbd>
             <span id="badge-master-pending" class="text-[10px] px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">₹0 Due</span>
           </button>
-          <button id="btn-view-fixed-pans" onclick="App.switchView('fixed-pans')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition text-slate-400 hover:text-white flex items-center gap-1.5">
+          <button id="btn-view-fixed-pans" onclick="App.switchView('fixed-pans')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition text-slate-400 hover:text-white flex items-center gap-1.5" title="PAN Card Holders (Press 3)">
             <i class="fa-solid fa-users"></i>
             <span>PAN Card Holders</span>
+            <kbd class="hidden md:inline-block text-[9px]">3</kbd>
             <span id="badge-fixed-pan-count" class="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-800 text-slate-300">0</span>
           </button>
         </div>
 
         <div class="h-5 w-px bg-slate-800 mx-1 hidden sm:block"></div>
 
-        <button onclick="App.openCalculatorModal()" class="text-xs px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 transition flex items-center gap-1.5 font-medium">
+        <button onclick="App.openCalculatorModal()" class="text-xs px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 transition flex items-center gap-1.5 font-medium" title="Profit & Loss Calculator (Press C)">
           <i class="fa-solid fa-calculator"></i>
           <span class="hidden md:inline">Calculator</span>
+          <kbd class="hidden lg:inline-block text-[9px] text-amber-300/80 border-amber-500/30">C</kbd>
         </button>
 
-        <button onclick="App.exportCurrentViewToExcel()" class="text-xs px-3.5 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 transition flex items-center gap-1.5 font-semibold" title="Export formatted Excel Table with sorting & formulas">
+        <button onclick="App.exportCurrentViewToExcel()" class="text-xs px-3.5 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 transition flex items-center gap-1.5 font-semibold" title="Export formatted Excel Table with sorting & formulas (Press E)">
           <i class="fa-solid fa-file-excel text-emerald-400"></i>
           <span>Export Excel Table</span>
+          <kbd class="hidden lg:inline-block text-[9px] text-emerald-300/80 border-emerald-500/40">E</kbd>
+        </button>
+
+        <button onclick="App.openShortcutsModal()" class="text-xs px-2.5 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition flex items-center gap-1.5 font-medium" title="Keyboard Shortcuts Cheat Sheet (Press ?)">
+          <i class="fa-solid fa-keyboard text-indigo-400"></i>
+          <span class="hidden xl:inline">Hotkeys</span>
+          <kbd class="text-[9px] text-indigo-300 border-indigo-500/40">?</kbd>
         </button>
       </div>
     </div>
@@ -121,8 +132,10 @@
           <!-- Dynamically populated IPO buttons -->
         </div>
 
-        <button onclick="App.openAddIpoModal()" class="text-xs px-3 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5 flex-shrink-0 font-medium">
-          <i class="fa-solid fa-plus text-emerald-400"></i> New IPO
+        <button onclick="App.openAddIpoModal()" class="text-xs px-3 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5 flex-shrink-0 font-medium" title="Create New IPO (Press I)">
+          <i class="fa-solid fa-plus text-emerald-400"></i>
+          <span>New IPO</span>
+          <kbd class="text-[9px] text-emerald-300/90 border-emerald-500/30">I</kbd>
         </button>
       </div>
 
@@ -192,19 +205,22 @@
 
           <!-- Quick Action Buttons -->
           <div class="flex items-center gap-2 self-stretch sm:self-auto flex-wrap">
-            <button id="btn-master-settle-ipo" onclick="App.masterToggleSettleCurrentIpo()" class="text-xs px-3.5 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 font-semibold transition flex items-center gap-1.5 shadow-sm" title="Settle all pending payouts in this IPO">
+            <button id="btn-master-settle-ipo" onclick="App.masterToggleSettleCurrentIpo()" class="text-xs px-3.5 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 font-semibold transition flex items-center gap-1.5 shadow-sm" title="Settle all pending payouts in this IPO (Press S)">
               <i class="fa-solid fa-check-double text-amber-400"></i>
               <span id="btn-master-settle-text">Master Settle IPO</span>
+              <kbd class="text-[9px] text-amber-300/90 border-amber-500/40">S</kbd>
             </button>
 
-            <button onclick="App.openBulkImportModal()" class="text-xs px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-indigo-300 border border-indigo-500/30 font-semibold transition flex items-center gap-1.5" title="Add multiple PAN card holders at once">
+            <button onclick="App.openBulkImportModal()" class="text-xs px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-indigo-300 border border-indigo-500/30 font-semibold transition flex items-center gap-1.5" title="Add multiple PAN card holders at once (Press B)">
               <i class="fa-solid fa-layer-group text-indigo-400"></i>
               <span>Add in Bulk</span>
+              <kbd class="text-[9px] text-indigo-300/90 border-indigo-500/40">B</kbd>
             </button>
 
-            <button onclick="App.openAddEntryModal()" class="text-xs px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition shadow-md shadow-indigo-600/30 flex items-center gap-1.5">
+            <button onclick="App.openAddEntryModal()" class="text-xs px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition shadow-md shadow-indigo-600/30 flex items-center gap-1.5" title="Add Single Allotment Split (Press A)">
               <i class="fa-solid fa-plus"></i>
               <span>+ Add Single Split</span>
+              <kbd class="text-[9px] text-white/90 bg-indigo-700 border-indigo-400/50">A</kbd>
             </button>
           </div>
         </div>
@@ -285,7 +301,7 @@
           <div class="flex flex-1 flex-wrap items-center gap-3">
             <div class="relative flex-1 min-w-[200px] max-w-sm">
               <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-              <input type="text" id="search-master-input" oninput="App.renderMasterSheet()" placeholder="Search person by name..." class="w-full bg-slate-950 border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+              <input type="text" id="search-master-input" oninput="App.renderMasterSheet()" placeholder="Search person by name... (Press / to focus)" class="w-full bg-slate-950 border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500">
             </div>
 
             <!-- Filter Pills -->
@@ -335,14 +351,15 @@
         <div class="flex flex-1 items-center gap-3">
           <div class="relative flex-1 max-w-md">
             <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-            <input type="text" id="search-fixed-pan-input" oninput="App.renderFixedPansTable()" placeholder="Search by Holder Name, Code, Middleman, Partner..." class="w-full bg-slate-950 border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+            <input type="text" id="search-fixed-pan-input" oninput="App.renderFixedPansTable()" placeholder="Search by Holder Name, Code, Middleman, Partner... (Press / to focus)" class="w-full bg-slate-950 border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500">
           </div>
         </div>
 
         <div class="flex items-center gap-2">
-          <button onclick="App.openAddFixedPanModal()" class="text-xs px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition shadow-md shadow-indigo-600/30 flex items-center gap-1.5">
+          <button onclick="App.openAddFixedPanModal()" class="text-xs px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition shadow-md shadow-indigo-600/30 flex items-center gap-1.5" title="Add PAN Card Holder (Press P)">
             <i class="fa-solid fa-plus"></i>
             <span>+ Add PAN Card Holder</span>
+            <kbd class="text-[9px] text-white/90 bg-indigo-700 border-indigo-400/50">P</kbd>
           </button>
         </div>
       </div>
@@ -742,9 +759,15 @@
           <div class="flex items-center justify-between text-xs">
             <span class="font-semibold text-slate-300">Select PAN Card Holders:</span>
             <div class="flex items-center gap-2">
-              <button type="button" onclick="App.toggleAllBulkCheckboxes(true)" class="text-indigo-400 hover:text-indigo-300 font-medium">Select All</button>
+              <button type="button" onclick="App.toggleAllBulkCheckboxes(true)" class="text-indigo-400 hover:text-indigo-300 font-medium flex items-center gap-1" title="Select All (Alt+A)">
+                <span>Select All</span>
+                <kbd class="text-[9px] text-indigo-300/80 border-indigo-500/30">Alt+A</kbd>
+              </button>
               <span class="text-slate-600">|</span>
-              <button type="button" onclick="App.toggleAllBulkCheckboxes(false)" class="text-slate-400 hover:text-slate-300 font-medium">Deselect All</button>
+              <button type="button" onclick="App.toggleAllBulkCheckboxes(false)" class="text-slate-400 hover:text-slate-300 font-medium flex items-center gap-1" title="Deselect All (Alt+D)">
+                <span>Deselect All</span>
+                <kbd class="text-[9px] text-slate-400/80 border-slate-700">Alt+D</kbd>
+              </button>
             </div>
           </div>
 
@@ -1198,6 +1221,137 @@
             </button>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: KEYBOARD SHORTCUTS CHEAT SHEET -->
+  <div id="modal-shortcuts" class="modal-overlay hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/60">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center text-sm">
+            <i class="fa-solid fa-keyboard"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-white text-base">Keyboard Shortcuts</h3>
+            <p class="text-xs text-slate-400">Power user hotkeys for daily IPO profit management</p>
+          </div>
+        </div>
+        <button onclick="App.closeModal('modal-shortcuts')" class="text-slate-400 hover:text-white transition p-1.5 rounded-lg hover:bg-slate-800" title="Close (Esc)">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="p-6 max-h-[78vh] overflow-y-auto space-y-5">
+        <!-- Section 1: Navigation -->
+        <div>
+          <h4 class="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+            <i class="fa-solid fa-compass"></i> Navigation
+          </h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+            <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/50 border border-slate-800/80">
+              <span class="text-slate-300">IPO Splits View</span>
+              <kbd>1</kbd>
+            </div>
+            <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/50 border border-slate-800/80">
+              <span class="text-slate-300">Master Sheet View</span>
+              <kbd>2</kbd>
+            </div>
+            <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/50 border border-slate-800/80">
+              <span class="text-slate-300">PAN Card Holders View</span>
+              <kbd>3</kbd>
+            </div>
+            <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/50 border border-slate-800/80">
+              <span class="text-slate-300">Previous / Next IPO Tab</span>
+              <div class="flex items-center gap-1">
+                <kbd>[</kbd>
+                <kbd>]</kbd>
+              </div>
+            </div>
+            <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/50 border border-slate-800/80 md:col-span-2">
+              <span class="text-slate-300">Focus Search Bar (in active view)</span>
+              <div class="flex items-center gap-1">
+                <kbd>/</kbd>
+                <span class="text-slate-500">or</span>
+                <kbd>Ctrl+K</kbd>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 2: Daily Actions -->
+        <div>
+          <h4 class="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+            <i class="fa-solid fa-bolt"></i> Daily Core Actions
+          </h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+            <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/50 border border-slate-800/80">
+              <span class="text-slate-300">+ Add Single Allotment</span>
+              <div class="flex items-center gap-1">
+                <kbd>A</kbd>
+                <span class="text-slate-500">or</span>
+                <kbd>N</kbd>
+              </div>
+            </div>
+            <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/50 border border-slate-800/80">
+              <span class="text-slate-300">Bulk Add PAN Holders</span>
+              <kbd>B</kbd>
+            </div>
+            <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/50 border border-slate-800/80">
+              <span class="text-slate-300">Create New IPO</span>
+              <kbd>I</kbd>
+            </div>
+            <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/50 border border-slate-800/80">
+              <span class="text-slate-300">+ Add PAN Card Holder</span>
+              <kbd>P</kbd>
+            </div>
+            <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/50 border border-slate-800/80">
+              <span class="text-slate-300">Master Settle Current IPO</span>
+              <kbd>S</kbd>
+            </div>
+            <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/50 border border-slate-800/80">
+              <span class="text-slate-300">Export Formatted Excel Table</span>
+              <kbd>E</kbd>
+            </div>
+            <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/50 border border-slate-800/80 md:col-span-2">
+              <span class="text-slate-300">Open Profit &amp; Loss Calculator</span>
+              <kbd>C</kbd>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 3: Inside Modals -->
+        <div>
+          <h4 class="text-xs font-bold text-amber-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+            <i class="fa-solid fa-window-restore"></i> Inside Modals &amp; Forms
+          </h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+            <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/50 border border-slate-800/80">
+              <span class="text-slate-300">Save / Submit Form Instantly</span>
+              <kbd>Ctrl + Enter</kbd>
+            </div>
+            <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/50 border border-slate-800/80">
+              <span class="text-slate-300">Close Modal / Dropdown</span>
+              <kbd>Esc</kbd>
+            </div>
+            <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/50 border border-slate-800/80">
+              <span class="text-slate-300">In Bulk Modal: Select All</span>
+              <kbd>Alt + A</kbd>
+            </div>
+            <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/50 border border-slate-800/80">
+              <span class="text-slate-300">In Bulk Modal: Deselect All</span>
+              <kbd>Alt + D</kbd>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="px-6 py-3.5 bg-slate-950/60 border-t border-slate-800 flex items-center justify-between text-xs">
+        <span class="text-slate-400">Press <kbd>?</kbd> anytime to toggle this helper</span>
+        <button onclick="App.closeModal('modal-shortcuts')" class="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition">
+          Got it
+        </button>
       </div>
     </div>
   </div>
